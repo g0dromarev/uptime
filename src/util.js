@@ -6,9 +6,9 @@
 //
 // Backend uses the compiled file util.js
 // Frontend uses util.ts
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 exports.localToUTC = exports.utcToLocal = exports.utcToISODateTime = exports.isoToUTCDateTime = exports.parseTimeFromTimeObject = exports.parseTimeObject = exports.getMaintenanceRelativeURL = exports.getMonitorRelativeURL = exports.genSecret = exports.getCryptoRandomInt = exports.getRandomInt = exports.getRandomArbitrary = exports.TimeLogger = exports.polyfill = exports.log = exports.debug = exports.ucfirst = exports.sleep = exports.flipStatus = exports.MIN_INTERVAL_SECOND = exports.MAX_INTERVAL_SECOND = exports.SQL_DATETIME_FORMAT_WITHOUT_SECOND = exports.SQL_DATETIME_FORMAT = exports.SQL_DATE_FORMAT = exports.STATUS_PAGE_MAINTENANCE = exports.STATUS_PAGE_PARTIAL_DOWN = exports.STATUS_PAGE_ALL_UP = exports.STATUS_PAGE_ALL_DOWN = exports.MAINTENANCE = exports.PENDING = exports.UP = exports.DOWN = exports.appName = exports.isDev = void 0;
-const dayjs = require("dayjs");
+var dayjs = require("dayjs");
 exports.isDev = process.env.NODE_ENV === "development";
 exports.appName = "Uptime Kuma";
 exports.DOWN = 0;
@@ -23,7 +23,7 @@ exports.SQL_DATE_FORMAT = "YYYY-MM-DD";
 exports.SQL_DATETIME_FORMAT = "YYYY-MM-DD HH:mm:ss";
 exports.SQL_DATETIME_FORMAT_WITHOUT_SECOND = "YYYY-MM-DD HH:mm";
 exports.MAX_INTERVAL_SECOND = 2073600; // 24 days
-exports.MIN_INTERVAL_SECOND = 1; // 1 seconds
+exports.MIN_INTERVAL_SECOND = 5; // 5 seconds
 /** Flip the status of s */
 function flipStatus(s) {
     if (s === exports.UP) {
@@ -40,7 +40,7 @@ exports.flipStatus = flipStatus;
  * @param ms Number of milliseconds to sleep for
  */
 function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(function (resolve) { return setTimeout(resolve, ms); });
 }
 exports.sleep = sleep;
 /**
@@ -51,7 +51,7 @@ function ucfirst(str) {
     if (!str) {
         return str;
     }
-    const firstLetter = str.substr(0, 1);
+    var firstLetter = str.substr(0, 1);
     return firstLetter.toUpperCase() + str.substr(1);
 }
 exports.ucfirst = ucfirst;
@@ -64,8 +64,8 @@ function debug(msg) {
     exports.log.log("", msg, "debug");
 }
 exports.debug = debug;
-class Logger {
-    constructor() {
+var Logger = /** @class */ (function () {
+    function Logger() {
         /**
          * UPTIME_KUMA_HIDE_LOG=debug_monitor,info_monitor
          *
@@ -79,13 +79,14 @@ class Logger {
             info: [],
             warn: [],
             error: [],
-            debug: [],
+            debug: []
         };
         if (typeof process !== "undefined" && process.env.UPTIME_KUMA_HIDE_LOG) {
-            let list = process.env.UPTIME_KUMA_HIDE_LOG.split(",").map(v => v.toLowerCase());
-            for (let pair of list) {
+            var list = process.env.UPTIME_KUMA_HIDE_LOG.split(",").map(function (v) { return v.toLowerCase(); });
+            for (var _i = 0, list_1 = list; _i < list_1.length; _i++) {
+                var pair = list_1[_i];
                 // split first "_" only
-                let values = pair.split(/_(.*)/s);
+                var values = pair.split(/_(.*)/s);
                 if (values.length >= 2) {
                     this.hideLog[values[0]].push(values[1]);
                 }
@@ -100,20 +101,20 @@ class Logger {
      * @param msg Message to write
      * @param level Log level. One of INFO, WARN, ERROR, DEBUG or can be customized.
      */
-    log(module, msg, level) {
+    Logger.prototype.log = function (module, msg, level) {
         if (this.hideLog[level] && this.hideLog[level].includes(module.toLowerCase())) {
             return;
         }
         module = module.toUpperCase();
         level = level.toUpperCase();
-        let now;
+        var now;
         if (dayjs.tz) {
             now = dayjs.tz(new Date()).format();
         }
         else {
             now = dayjs().format();
         }
-        const formattedMessage = (typeof msg === "string") ? `${now} [${module}] ${level}: ${msg}` : msg;
+        var formattedMessage = (typeof msg === "string") ? "".concat(now, " [").concat(module, "] ").concat(level, ": ").concat(msg) : msg;
         if (level === "INFO") {
             console.info(formattedMessage);
         }
@@ -131,53 +132,54 @@ class Logger {
         else {
             console.log(formattedMessage);
         }
-    }
+    };
     /**
      * Log an INFO message
      * @param module Module log comes from
      * @param msg Message to write
      */
-    info(module, msg) {
+    Logger.prototype.info = function (module, msg) {
         this.log(module, msg, "info");
-    }
+    };
     /**
      * Log a WARN message
      * @param module Module log comes from
      * @param msg Message to write
      */
-    warn(module, msg) {
+    Logger.prototype.warn = function (module, msg) {
         this.log(module, msg, "warn");
-    }
+    };
     /**
      * Log an ERROR message
      * @param module Module log comes from
      * @param msg Message to write
      */
-    error(module, msg) {
+    Logger.prototype.error = function (module, msg) {
         this.log(module, msg, "error");
-    }
+    };
     /**
      * Log a DEBUG message
      * @param module Module log comes from
      * @param msg Message to write
      */
-    debug(module, msg) {
+    Logger.prototype.debug = function (module, msg) {
         this.log(module, msg, "debug");
-    }
+    };
     /**
      * Log an exeption as an ERROR
      * @param module Module log comes from
      * @param exception The exeption to include
      * @param msg The message to write
      */
-    exception(module, exception, msg) {
-        let finalMessage = exception;
+    Logger.prototype.exception = function (module, exception, msg) {
+        var finalMessage = exception;
         if (msg) {
-            finalMessage = `${msg}: ${exception}`;
+            finalMessage = "".concat(msg, ": ").concat(exception);
         }
         this.log(module, finalMessage, "error");
-    }
-}
+    };
+    return Logger;
+}());
 exports.log = new Logger();
 /**
  * String.prototype.replaceAll() polyfill
@@ -198,20 +200,21 @@ function polyfill() {
     }
 }
 exports.polyfill = polyfill;
-class TimeLogger {
-    constructor() {
+var TimeLogger = /** @class */ (function () {
+    function TimeLogger() {
         this.startTime = dayjs().valueOf();
     }
     /**
      * Output time since start of monitor
      * @param name Name of monitor
      */
-    print(name) {
+    TimeLogger.prototype.print = function (name) {
         if (exports.isDev && process.env.TIMELOGGER === "1") {
             console.log(name + ": " + (dayjs().valueOf() - this.startTime) + "ms");
         }
-    }
-}
+    };
+    return TimeLogger;
+}());
 exports.TimeLogger = TimeLogger;
 /**
  * Returns a random number between min (inclusive) and max (exclusive)
@@ -239,12 +242,12 @@ exports.getRandomInt = getRandomInt;
  * Returns either the NodeJS crypto.randomBytes() function or its
  * browser equivalent implemented via window.crypto.getRandomValues()
  */
-let getRandomBytes = ((typeof window !== 'undefined' && window.crypto)
+var getRandomBytes = ((typeof window !== 'undefined' && window.crypto)
     // Browsers
     ? function () {
-        return (numBytes) => {
-            let randomBytes = new Uint8Array(numBytes);
-            for (let i = 0; i < numBytes; i += 65536) {
+        return function (numBytes) {
+            var randomBytes = new Uint8Array(numBytes);
+            for (var i = 0; i < numBytes; i += 65536) {
                 window.crypto.getRandomValues(randomBytes.subarray(i, i + Math.min(numBytes - i, 65536)));
             }
             return randomBytes;
@@ -263,13 +266,13 @@ let getRandomBytes = ((typeof window !== 'undefined' && window.crypto)
  */
 function getCryptoRandomInt(min, max) {
     // synchronous version of: https://github.com/joepie91/node-random-number-csprng
-    const range = max - min;
+    var range = max - min;
     if (range >= Math.pow(2, 32))
         console.log("Warning! Range is too large.");
-    let tmpRange = range;
-    let bitsNeeded = 0;
-    let bytesNeeded = 0;
-    let mask = 1;
+    var tmpRange = range;
+    var bitsNeeded = 0;
+    var bytesNeeded = 0;
+    var mask = 1;
     while (tmpRange > 0) {
         if (bitsNeeded % 8 === 0)
             bytesNeeded += 1;
@@ -277,9 +280,9 @@ function getCryptoRandomInt(min, max) {
         mask = mask << 1 | 1;
         tmpRange = tmpRange >>> 1;
     }
-    const randomBytes = getRandomBytes(bytesNeeded);
-    let randomValue = 0;
-    for (let i = 0; i < bytesNeeded; i++) {
+    var randomBytes = getRandomBytes(bytesNeeded);
+    var randomValue = 0;
+    for (var i = 0; i < bytesNeeded; i++) {
         randomValue |= randomBytes[i] << 8 * i;
     }
     randomValue = randomValue & mask;
@@ -296,11 +299,12 @@ exports.getCryptoRandomInt = getCryptoRandomInt;
  * @param length Length of string to generate
  * @returns string
  */
-function genSecret(length = 64) {
-    let secret = "";
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    const charsLength = chars.length;
-    for (let i = 0; i < length; i++) {
+function genSecret(length) {
+    if (length === void 0) { length = 64; }
+    var secret = "";
+    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var charsLength = chars.length;
+    for (var i = 0; i < length; i++) {
         secret += chars.charAt(getCryptoRandomInt(0, charsLength - 1));
     }
     return secret;
@@ -333,17 +337,17 @@ function parseTimeObject(time) {
     if (!time) {
         return {
             hours: 0,
-            minutes: 0,
+            minutes: 0
         };
     }
-    let array = time.split(":");
+    var array = time.split(":");
     if (array.length < 2) {
         throw new Error("parseVueDatePickerTimeFormat: Invalid Time");
     }
-    let obj = {
+    var obj = {
         hours: parseInt(array[0]),
         minutes: parseInt(array[1]),
-        seconds: 0,
+        seconds: 0
     };
     if (array.length >= 3) {
         obj.seconds = parseInt(array[2]);
@@ -358,7 +362,7 @@ function parseTimeFromTimeObject(obj) {
     if (!obj) {
         return obj;
     }
-    let result = "";
+    var result = "";
     result += obj.hours.toString().padStart(2, "0") + ":" + obj.minutes.toString().padStart(2, "0");
     if (obj.seconds) {
         result += ":" + obj.seconds.toString().padStart(2, "0");
@@ -385,7 +389,8 @@ exports.utcToISODateTime = utcToISODateTime;
 /**
  * For SQL_DATETIME_FORMAT
  */
-function utcToLocal(input, format = exports.SQL_DATETIME_FORMAT) {
+function utcToLocal(input, format) {
+    if (format === void 0) { format = exports.SQL_DATETIME_FORMAT; }
     return dayjs.utc(input).local().format(format);
 }
 exports.utcToLocal = utcToLocal;
@@ -395,7 +400,8 @@ exports.utcToLocal = utcToLocal;
  * @param format Format to return
  * @returns Date in requested format
  */
-function localToUTC(input, format = exports.SQL_DATETIME_FORMAT) {
+function localToUTC(input, format) {
+    if (format === void 0) { format = exports.SQL_DATETIME_FORMAT; }
     return dayjs(input).utc().format(format);
 }
 exports.localToUTC = localToUTC;
