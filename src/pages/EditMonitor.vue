@@ -381,7 +381,21 @@
                             <!-- Interval -->
                             <div class="my-3">
                                 <label for="interval" class="form-label">{{ $t("Heartbeat Interval") }} ({{ $t("checkEverySecond", [ monitor.interval ]) }})</label>
-                                <input id="interval" v-model="monitor.interval" type="number" class="form-control" required :min="minInterval" step="1" :max="maxInterval" @blur="finishUpdateInterval">
+                                <input
+                                    id="interval"
+                                    v-model="monitor.interval"
+                                    type="number"
+                                    class="form-control"
+                                    required
+                                    :min="minInterval"
+                                    step="1"
+                                    :max="maxInterval"
+                                    @focus="lowIntervalConfirmation.editedValue=true"
+                                    @blur="checkIntervalValue"
+                                >
+                                <div v-if="monitor.interval < 5" class="form-text">
+                                    {{ $t("minimumIntervalWarning") }}
+                                </div>
                             </div>
 
                             <div class="my-3">
@@ -398,6 +412,9 @@
                                     <span>({{ $t("retryCheckEverySecond", [ monitor.retryInterval ]) }})</span>
                                 </label>
                                 <input id="retry-interval" v-model="monitor.retryInterval" type="number" class="form-control" required :min="minInterval" step="1">
+                                <div v-if="monitor.retryInterval < 5" class="form-text">
+                                    {{ $t("minimumIntervalWarning") }}
+                                </div>
                             </div>
 
                             <!-- Timeout: HTTP / Keyword only -->
@@ -826,6 +843,24 @@
             <NotificationDialog ref="notificationDialog" @added="addedNotification" />
             <DockerHostDialog ref="dockerHostDialog" @added="addedDockerHost" />
             <ProxyDialog ref="proxyDialog" @added="addedProxy" />
+
+            <Confirm ref="confirmLowIntervalValue" btn-style="btn-danger" :yes-text="$t('Confirm')" :no-text="$t('Cancel')" @yes="validateConfirmationString">
+                <p>{{ $t("lowIntervalWarning") }}</p>
+                <p>{{ $t("Please use this option carefully!") }}</p>
+
+                <div class="mb-3">
+                    <i18n-t tag="label" keypath="enterConfirmationString" for="confirmation-string" class="form-label user-select-none">
+                        {{ lowIntervalConfirmation.testString }}
+                    </i18n-t>
+                    <input
+                        id="confirmation-string"
+                        v-model="lowIntervalConfirmation.userString"
+                        type="text"
+                        class="form-control"
+                        required
+                    />
+                </div>
+            </Confirm>
             <CreateGroupDialog ref="createGroupDialog" @added="addedDraftGroup" />
         </div>
     </transition>
@@ -836,6 +871,7 @@ import VueMultiselect from "vue-multiselect";
 import { useToast } from "vue-toastification";
 import ActionSelect from "../components/ActionSelect.vue";
 import CopyableInput from "../components/CopyableInput.vue";
+import Confirm from "../components/Confirm.vue";
 import CreateGroupDialog from "../components/CreateGroupDialog.vue";
 import NotificationDialog from "../components/NotificationDialog.vue";
 import DockerHostDialog from "../components/DockerHostDialog.vue";
@@ -889,6 +925,7 @@ export default {
         ActionSelect,
         ProxyDialog,
         CopyableInput,
+        Confirm,
         CreateGroupDialog,
         NotificationDialog,
         DockerHostDialog,
@@ -907,6 +944,12 @@ export default {
             },
             acceptedStatusCodeOptions: [],
             dnsresolvetypeOptions: [],
+            lowIntervalConfirmation: {
+                testString: "",
+                userString: "",
+                confirmed: false,
+                editedValue: false,
+            },
             kafkaSaslMechanismOptions: [],
             ipOrHostnameRegexPattern: hostNameRegexPattern(),
             mqttIpOrHostnameRegexPattern: hostNameRegexPattern(true),
@@ -1234,6 +1277,7 @@ message HealthCheckResponse {
 
         this.acceptedStatusCodeOptions = acceptedStatusCodeOptions;
         this.dnsresolvetypeOptions = dnsresolvetypeOptions;
+        this.lowIntervalConfirmation.testString = Math.random().toString(36).substring(2, 9);
         this.kafkaSaslMechanismOptions = kafkaSaslMechanismOptions;
     },
     methods: {
@@ -1348,6 +1392,26 @@ message HealthCheckResponse {
         },
 
         /**
+         * Show popup if the interval value is less than 20
+         */
+        checkIntervalValue() {
+            if (this.monitor.interval < 5) {
+                this.$refs.confirmLowIntervalValue.show();
+            }
+        },
+        /**
+         * Check that the user inputed code is correct
+         */
+        validateConfirmationString() {
+            if (this.lowIntervalConfirmation.testString === this.lowIntervalConfirmation.userString) {
+                this.lowIntervalConfirmation.confirmed = true;
+                toast.success(this.$t("Confirmed"));
+            } else {
+                this.lowIntervalConfirmation.confirmed = false;
+                toast.error(this.$t("errCodeMismatch"));
+            }
+        },
+        /*
          * Submit the form data for processing
          * @returns {void}
          */
@@ -1359,6 +1423,16 @@ message HealthCheckResponse {
                 this.processing = false;
                 return;
             }
+
+            // Check user has confirmed use of low interval value. Only
+            // do this if the interval value has changed since last save
+            if (this.lowIntervalConfirmation.editedValue && this.monitor.interval < 5 && !this.lowIntervalConfirmation.confirmed) {
+                toast.error(this.$t("confirmLowIntervalRequired"));
+                this.processing = false;
+                return;
+            }
+            this.lowIntervalConfirmation.confirmed = false;
+            this.lowIntervalConfirmation.editedValue = false;
 
             // Beautify the JSON format (only if httpBodyEncoding is not set or === json)
             if (this.monitor.body && (!this.monitor.httpBodyEncoding || this.monitor.httpBodyEncoding === "json")) {
